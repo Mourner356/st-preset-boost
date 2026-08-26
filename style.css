@@ -1,26 +1,274 @@
-/* ========== 预设列表：渲染隔离 ========== */
+/* ========== v1.0.0 预设列表基础优化 ========== */
 body.pb-on #completion_prompt_manager_list,
 body.pb-on .completion_prompt_manager_list,
 body.pb-on .completion_prompt_manager_prompt {
     contain: layout style;
 }
 
-/* 屏幕外条目延迟渲染。
-   行高由 JS 实测后写入 --pb-row-h，
-   估值准确了往回滚才不会重算滚动高度 */
 body.pb-lazy .completion_prompt_manager_prompt {
     content-visibility: auto;
-    contain-intrinsic-size: auto var(--pb-row-h, 34px);
+    contain-intrinsic-size: auto 34px;
 }
 
-/* 滚动条位置锚定，避免上翻时内容跳动 */
-body.pb-on #completion_prompt_manager_list,
-body.pb-on .completion_prompt_manager_list {
+/* ========== 拖拽期间低开销模式 ========== */
+body.pb-dragging *,
+body.pb-dragging *::before,
+body.pb-dragging *::after {
+    transition: none !important;
+    animation: none !important;
+}
+
+body.pb-dragging #completion_prompt_manager_list,
+body.pb-dragging #completion_prompt_manager_list *,
+body.pb-dragging .completion_prompt_manager_list,
+body.pb-dragging .completion_prompt_manager_list * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+body.pb-dragging {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* ========== 全局关闭毛玻璃 ========== */
+body.pb-noblur {
+    --SmartThemeBlurStrength: 0px;
+}
+
+body.pb-noblur .drawer-content,
+body.pb-noblur #openai_settings,
+body.pb-noblur .popup,
+body.pb-noblur dialog,
+body.pb-noblur #completion_prompt_manager_list,
+body.pb-noblur #completion_prompt_manager_list * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* ========== 编辑框优化 ========== */
+body.pb-edit #completion_prompt_manager_popup_entry_form_prompt,
+body.pb-edit #completion_prompt_manager_popup_edit textarea,
+body.pb-edit #completion_prompt_manager textarea,
+body.pb-edit .completion_prompt_manager textarea {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    text-rendering: optimizeSpeed;
+    font-variant-ligatures: none;
+    contain: layout style;
+    overscroll-behavior: contain;
+}
+
+body.pb-edit #completion_prompt_manager_popup_edit,
+body.pb-edit #completion_prompt_manager_popup_edit * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+body.pb-edit #completion_prompt_manager_popup_entry_form_prompt:focus,
+body.pb-edit .completion_prompt_manager textarea:focus {
+    outline: 2px solid var(--SmartThemeQuoteColor, #6c8cff);
+    outline-offset: -2px;
+    box-shadow: none !important;
+}
+
+/* ========== 点按反馈（修复开关控制bug） ========== */
+/* 只有启用了 tapFeedback 才应用 JS 缩放效果 */
+body.pb-tap .pb-pressed {
+    transform: scale(0.94);
+    filter: brightness(1.25);
+    transition: transform 0.06s ease-out, filter 0.06s ease-out;
+}
+
+/* 只有启用了 tapFeedback 才应用过渡动画 */
+body.pb-tap button,
+body.pb-tap .menu_button,
+body.pb-tap .drawer-icon,
+body.pb-tap .inline-drawer-toggle,
+body.pb-tap [role="button"] {
+    transition: transform 0.12s ease-out, filter 0.12s ease-out;
+}
+
+/* 修复：CSS :active 伪类也要受开关控制 */
+body.pb-tap button:active,
+body.pb-tap .menu_button:active,
+body.pb-tap .drawer-icon:active {
+    transform: scale(0.94);
+}
+
+/* 波纹图层 */
+#pb-ripple-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99999;
+    overflow: hidden;
+}
+
+#pb-ripple-layer .pb-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    background: var(--SmartThemeQuoteColor, #8aa4ff);
+    opacity: 0.55;
+    animation: pb-dot-out 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes pb-dot-out {
+    from { transform: scale(0.4); opacity: 0.55; }
+    to   { transform: scale(4.2); opacity: 0; }
+}
+
+/* ========== v1.1.2 新增：预设列表滚动优化 ========== */
+body.pb-smooth #completion_prompt_manager_list,
+body.pb-smooth .completion_prompt_manager_list {
+    /* 滚动性能优化 */
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    
+    /* 减少滚动时的重排 */
+    will-change: scroll-position;
+    transform: translateZ(0); /* 强制硬件加速 */
+}
+
+/* 滚动条样式优化 */
+body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar,
+body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar {
+    width: 8px;
+}
+
+body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-track,
+body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-thumb,
+body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-thumb:hover,
+body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* ========== v1.1.2 新增：流式输出防抖动 ========== */
+body.pb-stream #chat,
+body.pb-stream .chat,
+body.pb-stream #sheld {
+    /* 防止流式输出时的跳跃 */
+    contain: layout style;
     overflow-anchor: auto;
+    scroll-behavior: smooth;
 }
 
-/* ========== 滚动期间降开销 ==========
-   往回滚要把之前跳过的行重新画出来，
-   带着阴影和模糊画就会顿一下 */
-body.pb-scrolling #completion_prompt_manager_list,
-body.pb-scrolling #completion_promp
+/* 消息容器稳定性 */
+body.pb-stream .mes,
+body.pb-stream .swipe_right,
+body.pb-stream .swipe_left {
+    contain: layout;
+    /* 防止文本插入时的高度跳跃 */
+    min-height: 2em;
+    transition: height 0.1s ease-out;
+}
+
+/* 流式输出时的文本容器 */
+body.pb-stream .mes_text {
+    contain: layout style;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* 减少流式输出时的闪烁 */
+body.pb-stream .mes .mes_text:empty::before {
+    content: ' ';
+    visibility: hidden;
+}
+
+/* ========== 设置面板样式更新 ========== */
+.pb-settings-block .pb-group {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.pb-settings-block .pb-group:last-of-type {
+    border-bottom: none;
+}
+
+.pb-settings-block .pb-group-title {
+    font-size: 0.85em;
+    font-weight: bold;
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+
+.pb-settings-block .checkbox_label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+/* v1.1.2 新增：调试信息样式 */
+.pb-settings-block .pb-debug {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(128, 128, 128, 0.25);
+    font-size: 0.8em;
+}
+
+.pb-settings-block .pb-debug-title {
+    font-weight: bold;
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+
+.pb-settings-block .pb-debug-line {
+    margin-bottom: 3px;
+    opacity: 0.6;
+}
+
+.pb-settings-block .pb-debug-line span {
+    font-weight: bold;
+    opacity: 1;
+}
+
+/* 尊重系统减少动态效果设置 */
+@media (prefers-reduced-motion: reduce) {
+    #pb-ripple-layer .pb-dot { 
+        animation-duration: 0.01s; 
+    }
+    body.pb-tap .pb-pressed,
+    body.pb-tap button,
+    body.pb-tap .menu_button { 
+        transition-duration: 0.01s; 
+    }
+    body.pb-smooth #completion_prompt_manager_list,
+    body.pb-smooth .completion_prompt_manager_list {
+        scroll-behavior: auto;
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    body.pb-lazy .completion_prompt_manager_prompt {
+        contain-intrinsic-size: auto 40px;
+    }
+    #pb-ripple-layer .pb-dot {
+        width: 18px;
+        height: 18px;
+        margin: -9px 0 0 -9px;
+    }
+}
