@@ -1,4 +1,4 @@
-/* ========== v1.0.0 预设列表基础优化 ========== */
+/* ========== 预设列表基础优化 ========== */
 body.pb-on #completion_prompt_manager_list,
 body.pb-on .completion_prompt_manager_list,
 body.pb-on .completion_prompt_manager_prompt {
@@ -123,44 +123,6 @@ body.pb-tap .drawer-icon:active {
     to   { transform: scale(4.2); opacity: 0; }
 }
 
-/* ========== 预设列表滚动优化 ========== */
-body.pb-smooth #completion_prompt_manager_list,
-body.pb-smooth .completion_prompt_manager_list {
-    scroll-behavior: smooth;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    will-change: scroll-position;
-    transform: translateZ(0);
-}
-
-body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar,
-body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar {
-    width: 8px;
-}
-
-body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-track,
-body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-thumb,
-body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.3);
-    border-radius: 4px;
-    transition: background 0.2s ease;
-}
-
-body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-thumb:hover,
-body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb:hover {
-    background: rgba(128, 128, 128, 0.5);
-}
-
-/* ========== v1.1.3 修复：移除有问题的聊天容器CSS ========== */
-/* 
-之前的聊天容器 contain 规则太激进，导致消息内容不显示
-现在只在 JS 里做最小必要的优化，不影响消息显示
-*/
-
 /* ========== 设置面板样式 ========== */
 .pb-settings-block .pb-group {
     margin-bottom: 12px;
@@ -187,38 +149,23 @@ body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb:hover {
     font-size: 0.9em;
 }
 
-/* v1.1.3 新增：热修复通知样式 */
-.pb-settings-block .pb-hotfix-notice {
-    background: rgba(255, 152, 0, 0.15);
-    border: 1px solid rgba(255, 152, 0, 0.3);
+/* 回滚通知样式 */
+.pb-settings-block .pb-rollback-notice {
+    background: rgba(33, 150, 243, 0.15);
+    border: 1px solid rgba(33, 150, 243, 0.3);
     border-radius: 6px;
     padding: 8px 10px;
     margin-bottom: 12px;
     font-size: 0.85em;
-    color: #ff9800;
+    color: #2196f3;
 }
 
-.pb-settings-block .pb-debug {
-    margin-top: 12px;
-    padding-top: 10px;
+.pb-settings-block .pb-stat {
+    margin-top: 10px;
+    padding-top: 8px;
     border-top: 1px solid rgba(128, 128, 128, 0.25);
     font-size: 0.8em;
-}
-
-.pb-settings-block .pb-debug-title {
-    font-weight: bold;
     opacity: 0.7;
-    margin-bottom: 6px;
-}
-
-.pb-settings-block .pb-debug-line {
-    margin-bottom: 3px;
-    opacity: 0.6;
-}
-
-.pb-settings-block .pb-debug-line span {
-    font-weight: bold;
-    opacity: 1;
 }
 
 /* 尊重系统减少动态效果设置 */
@@ -230,10 +177,6 @@ body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb:hover {
     body.pb-tap button,
     body.pb-tap .menu_button { 
         transition-duration: 0.01s; 
-    }
-    body.pb-smooth #completion_prompt_manager_list,
-    body.pb-smooth .completion_prompt_manager_list {
-        scroll-behavior: auto;
     }
 }
 
