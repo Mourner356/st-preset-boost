@@ -12,13 +12,11 @@ const DEFAULTS = {
     noSpellcheck: true,
     tapFeedback: true,
     ripple: true,
-    smoothScroll: true,
-    streamOptim: true,
 };
 
 const LIST_SELECTOR = [
     '#completion_prompt_manager_list',
-    '.completion_prompt_manager_list',
+    '.completion_prompt_manager_list', 
     '#completion_prompt_manager',
 ].join(',');
 
@@ -41,12 +39,8 @@ const EDIT_SELECTOR = [
     '.completion_prompt_manager textarea',
 ].join(',');
 
-// v1.1.3 修复：更精确的聊天容器选择器
-const CHAT_SELECTOR = '#chat';
-
 let rippleLayer = null;
 let scanTimer = null;
-let streamObserver = null;
 
 /* ---------- 设置读写 ---------- */
 function cfg() {
@@ -69,11 +63,9 @@ function applyClasses() {
     b.classList.toggle('pb-noblur', s.enabled && s.killBlur);
     b.classList.toggle('pb-edit', s.enabled && s.editBoost);
     b.classList.toggle('pb-tap', s.enabled && s.tapFeedback);
-    b.classList.toggle('pb-smooth', s.enabled && s.smoothScroll);
-    b.classList.toggle('pb-stream', s.enabled && s.streamOptim);
 }
 
-/* ---------- 拖拽优化（不变） ---------- */
+/* ---------- 拖拽优化 ---------- */
 function onDragStart(event) {
     const s = cfg();
     if (!s.enabled || !s.dragBoost) return;
@@ -85,7 +77,7 @@ function onDragEnd() {
     document.body.classList.remove('pb-dragging');
 }
 
-/* ---------- 点按反馈（不变） ---------- */
+/* ---------- 点按反馈 ---------- */
 function ensureRippleLayer() {
     if (rippleLayer && document.body.contains(rippleLayer)) return rippleLayer;
     rippleLayer = document.createElement('div');
@@ -116,68 +108,6 @@ function onTapDown(event) {
     setTimeout(() => dot.remove(), 700);
 }
 
-/* ---------- v1.1.3 修复：流式输出优化重写 ---------- */
-function optimizeStreamOutput() {
-    const s = cfg();
-    if (!s.enabled || !s.streamOptim) return;
-
-    const chatContainer = document.querySelector(CHAT_SELECTOR);
-    if (!chatContainer || chatContainer.dataset.pbStreamFixed === '1') return;
-
-    // v1.1.3 修复：只做最小必要的优化，不影响消息显示
-    console.log('[Preset Boost] 应用流式输出优化到聊天容器');
-
-    // 清理旧的监听器
-    if (streamObserver) {
-        streamObserver.disconnect();
-        streamObserver = null;
-    }
-
-    // 重新创建监听器，只监听消息插入，强制刷新渲染防卡住
-    streamObserver = new MutationObserver((mutations) => {
-        let hasNewMessage = false;
-        
-        for (const mutation of mutations) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType === 1 && (
-                        node.classList?.contains('mes') ||
-                        node.querySelector?.('.mes')
-                    )) {
-                        hasNewMessage = true;
-                        break;
-                    }
-                }
-            }
-            if (hasNewMessage) break;
-        }
-        
-        if (hasNewMessage) {
-            // v1.1.3 修复：更温和的防卡住机制
-            // 强制触发一次重排，防止DOM更新卡住
-            chatContainer.scrollTop = chatContainer.scrollTop;
-            
-            // 平滑滚动到底部（如果用户在底部附近）
-            requestAnimationFrame(() => {
-                const isNearBottom = (chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight) < 100;
-                if (isNearBottom) {
-                    chatContainer.scrollTo({
-                        top: chatContainer.scrollHeight,
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        }
-    });
-    
-    streamObserver.observe(chatContainer, {
-        childList: true,
-        subtree: true
-    });
-    
-    chatContainer.dataset.pbStreamFixed = '1';
-}
-
 function bindGlobalHooks() {
     const opts = { passive: true, capture: true };
     document.addEventListener('pointerdown', onDragStart, opts);
@@ -187,7 +117,7 @@ function bindGlobalHooks() {
     document.addEventListener('pointerdown', onTapDown, opts);
 }
 
-/* ---------- 编辑框优化（不变） ---------- */
+/* ---------- 编辑框优化 ---------- */
 function tuneEditor(el) {
     if (el.dataset.pbTuned === '1') return;
     const s = cfg();
@@ -217,169 +147,108 @@ const LABELS = {
     noSpellcheck: '关闭拼写检查与自动纠正',
     tapFeedback: '点按缩放反馈',
     ripple: '点按波纹（依赖上一项）',
-    smoothScroll: '预设列表滚动优化',
-    streamOptim: '流式输出防卡顿（聊天时）',
 };
 
 const GROUPS = [
-    { title: '预设列表', keys: ['enabled', 'dragBoost', 'lazyRows', 'killBlur', 'smoothScroll'] },
+    { title: '预设列表', keys: ['enabled', 'dragBoost', 'lazyRows', 'killBlur'] },
     { title: '编辑框', keys: ['editBoost', 'noSpellcheck'] },
-    { title: '点按反馈', keys: out;
-}
+    { title: '点按反馈', keys: ['tapFeedback', 'ripple'] },
+];
 
-body.pb-tap button:active,
-body.pb-tap .menu_button:active,
-body.pb-tap .drawer-icon:active {
-    transform: scale(0.94);
-}
+function buildPanel() {
+    const host = document.getElementById('extensions_settings2')
+        || document.getElementById('extensions_settings');
+    if (!host) return false;
+    if (document.getElementById('pb_settings')) return true;
 
-/* 波纹图层 */
-#pb-ripple-layer {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 99999;
-    overflow: hidden;
-}
+    const s = cfg();
+    const groupsHtml = GROUPS.map(g => `
+        <div class="pb-group">
+            <div class="pb-group-title">${g.title}</div>
+            ${g.keys.map(k => `
+                <label class="checkbox_label">
+                    <input type="checkbox" id="pb_${k}" ${s[k] ? 'checked' : ''}>
+                    <span>${LABELS[k]}</span>
+                </label>
+            `).join('')}
+        </div>
+    `).join('');
 
-#pb-ripple-layer .pb-dot {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    margin: -7px 0 0 -7px;
-    border-radius: 50%;
-    background: var(--SmartThemeQuoteColor, #8aa4ff);
-    opacity: 0.55;
-    animation: pb-dot-out 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-}
+    const wrap = document.createElement('div');
+    wrap.id = 'pb_settings';
+    wrap.className = 'pb-settings-block';
+    wrap.innerHTML = `
+        <div class="inline-drawer">
+            <div class="inline-drawer-toggle inline-drawer-header">
+                <b>预设性能加速 v1.1.1 稳定版</b>
+                <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+            </div>
+            <div class="inline-drawer-content">
+                <div class="pb-rollback-notice">
+                    ℹ️ 已回滚到稳定版本，暂时移除聊天优化功能
+                </div>
+                ${groupsHtml}
+                <div class="pb-stat">
+                    预设条目 <span id="pb_count">—</span> ·
+                    编辑框已优化 <span id="pb_edit_count">—</span>
+                </div>
+            </div>
+        </div>
+    `;
+    host.appendChild(wrap);
 
-@keyframes pb-dot-out {
-    from { transform: scale(0.4); opacity: 0.55; }
-    to   { transform: scale(4.2); opacity: 0; }
-}
-
-/* ========== 预设列表滚动优化 ========== */
-body.pb-smooth #completion_prompt_manager_list,
-body.pb-smooth .completion_prompt_manager_list {
-    scroll-behavior: smooth;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    will-change: scroll-position;
-    transform: translateZ(0);
-}
-
-body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar,
-body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar {
-    width: 8px;
-}
-
-body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-track,
-body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-thumb,
-body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.3);
-    border-radius: 4px;
-    transition: background 0.2s ease;
-}
-
-body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar-thumb:hover,
-body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb:hover {
-    background: rgba(128, 128, 128, 0.5);
-}
-
-/* ========== v1.1.3 修复：移除有问题的聊天容器CSS ========== */
-/* 
-之前的聊天容器 contain 规则太激进，导致消息内容不显示
-现在只在 JS 里做最小必要的优化，不影响消息显示
-*/
-
-/* ========== 设置面板样式 ========== */
-.pb-settings-block .pb-group {
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(128, 128, 128, 0.25);
-}
-
-.pb-settings-block .pb-group:last-of-type {
-    border-bottom: none;
-}
-
-.pb-settings-block .pb-group-title {
-    font-size: 0.85em;
-    font-weight: bold;
-    opacity: 0.7;
-    margin-bottom: 6px;
-}
-
-.pb-settings-block .checkbox_label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 5px;
-    font-size: 0.9em;
-}
-
-/* v1.1.3 新增：热修复通知样式 */
-.pb-settings-block .pb-hotfix-notice {
-    background: rgba(255, 152, 0, 0.15);
-    border: 1px solid rgba(255, 152, 0, 0.3);
-    border-radius: 6px;
-    padding: 8px 10px;
-    margin-bottom: 12px;
-    font-size: 0.85em;
-    color: #ff9800;
-}
-
-.pb-settings-block .pb-debug {
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(128, 128, 128, 0.25);
-    font-size: 0.8em;
-}
-
-.pb-settings-block .pb-debug-title {
-    font-weight: bold;
-    opacity: 0.7;
-    margin-bottom: 6px;
-}
-
-.pb-settings-block .pb-debug-line {
-    margin-bottom: 3px;
-    opacity: 0.6;
-}
-
-.pb-settings-block .pb-debug-line span {
-    font-weight: bold;
-    opacity: 1;
-}
-
-/* 尊重系统减少动态效果设置 */
-@media (prefers-reduced-motion: reduce) {
-    #pb-ripple-layer .pb-dot { 
-        animation-duration: 0.01s; 
+    for (const key of Object.keys(DEFAULTS)) {
+        const input = document.getElementById(`pb_${key}`);
+        if (!input) continue;
+        input.addEventListener('change', () => {
+            cfg()[key] = input.checked;
+            applyClasses();
+            if (key === 'editBoost' || key === 'noSpellcheck') scanEditors();
+            if (key === 'ripple' || key === 'tapFeedback') {
+                if (!input.checked && rippleLayer) {
+                    rippleLayer.remove();
+                    rippleLayer = null;
+                }
+            }
+            saveSettingsDebounced();
+        });
     }
-    body.pb-tap .pb-pressed,
-    body.pb-tap button,
-    body.pb-tap .menu_button { 
-        transition-duration: 0.01s; 
-    }
-    body.pb-smooth #completion_prompt_manager_list,
-    body.pb-smooth .completion_prompt_manager_list {
-        scroll-behavior: auto;
-    }
+
+    return true;
 }
 
-/* 移动端适配 */
-@media (max-width: 768px) {
-    body.pb-lazy .completion_prompt_manager_prompt {
-        contain-intrinsic-size: auto 40px;
-    }
-    #pb-ripple-layer .pb-dot {
-        width: 18px;
-        height: 18px;
-        margin: -9px 0 0 -9px;
-    }
+function refreshStat() {
+    const a = document.getElementById('pb_count');
+    const b = document.getElementById('pb_edit_count');
+    if (a) a.textContent = String(document.querySelectorAll(ROW_SELECTOR).length);
+    if (b) b.textContent = String(document.querySelectorAll('[data-pb-tuned="1"]').length);
 }
+
+/* ---------- 启动 ---------- */
+function boot() {
+    cfg();
+    applyClasses();
+    bindGlobalHooks();
+    scanEditors();
+
+    scanTimer = setInterval(scanEditors, 1500);
+    setInterval(refreshStat, 3000);
+
+    let tries = 0;
+    const timer = setInterval(() => {
+        tries += 1;
+        if (buildPanel() || tries > 40) clearInterval(timer);
+    }, 500);
+
+    console.log('[Preset Boost v1.1.1] 已启动 - 稳定版');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+} else {
+    boot();
+}
+
+window.addEventListener('beforeunload', () => {
+    if (scanTimer) clearInterval(scanTimer);
+});
