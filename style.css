@@ -77,15 +77,13 @@ body.pb-edit .completion_prompt_manager textarea:focus {
     box-shadow: none !important;
 }
 
-/* ========== 点按反馈（修复开关控制bug） ========== */
-/* 只有启用了 tapFeedback 才应用 JS 缩放效果 */
+/* ========== 点按反馈 ========== */
 body.pb-tap .pb-pressed {
     transform: scale(0.94);
     filter: brightness(1.25);
     transition: transform 0.06s ease-out, filter 0.06s ease-out;
 }
 
-/* 只有启用了 tapFeedback 才应用过渡动画 */
 body.pb-tap button,
 body.pb-tap .menu_button,
 body.pb-tap .drawer-icon,
@@ -94,7 +92,6 @@ body.pb-tap [role="button"] {
     transition: transform 0.12s ease-out, filter 0.12s ease-out;
 }
 
-/* 修复：CSS :active 伪类也要受开关控制 */
 body.pb-tap button:active,
 body.pb-tap .menu_button:active,
 body.pb-tap .drawer-icon:active {
@@ -126,20 +123,16 @@ body.pb-tap .drawer-icon:active {
     to   { transform: scale(4.2); opacity: 0; }
 }
 
-/* ========== v1.1.2 新增：预设列表滚动优化 ========== */
+/* ========== 预设列表滚动优化 ========== */
 body.pb-smooth #completion_prompt_manager_list,
 body.pb-smooth .completion_prompt_manager_list {
-    /* 滚动性能优化 */
     scroll-behavior: smooth;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    
-    /* 减少滚动时的重排 */
     will-change: scroll-position;
-    transform: translateZ(0); /* 强制硬件加速 */
+    transform: translateZ(0);
 }
 
-/* 滚动条样式优化 */
 body.pb-smooth #completion_prompt_manager_list::-webkit-scrollbar,
 body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar {
     width: 8px;
@@ -162,40 +155,13 @@ body.pb-smooth .completion_prompt_manager_list::-webkit-scrollbar-thumb:hover {
     background: rgba(128, 128, 128, 0.5);
 }
 
-/* ========== v1.1.2 新增：流式输出防抖动 ========== */
-body.pb-stream #chat,
-body.pb-stream .chat,
-body.pb-stream #sheld {
-    /* 防止流式输出时的跳跃 */
-    contain: layout style;
-    overflow-anchor: auto;
-    scroll-behavior: smooth;
-}
+/* ========== v1.1.3 修复：移除有问题的聊天容器CSS ========== */
+/* 
+之前的聊天容器 contain 规则太激进，导致消息内容不显示
+现在只在 JS 里做最小必要的优化，不影响消息显示
+*/
 
-/* 消息容器稳定性 */
-body.pb-stream .mes,
-body.pb-stream .swipe_right,
-body.pb-stream .swipe_left {
-    contain: layout;
-    /* 防止文本插入时的高度跳跃 */
-    min-height: 2em;
-    transition: height 0.1s ease-out;
-}
-
-/* 流式输出时的文本容器 */
-body.pb-stream .mes_text {
-    contain: layout style;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-/* 减少流式输出时的闪烁 */
-body.pb-stream .mes .mes_text:empty::before {
-    content: ' ';
-    visibility: hidden;
-}
-
-/* ========== 设置面板样式更新 ========== */
+/* ========== 设置面板样式 ========== */
 .pb-settings-block .pb-group {
     margin-bottom: 12px;
     padding-bottom: 10px;
@@ -221,7 +187,17 @@ body.pb-stream .mes .mes_text:empty::before {
     font-size: 0.9em;
 }
 
-/* v1.1.2 新增：调试信息样式 */
+/* v1.1.3 新增：热修复通知样式 */
+.pb-settings-block .pb-hotfix-notice {
+    background: rgba(255, 152, 0, 0.15);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+    font-size: 0.85em;
+    color: #ff9800;
+}
+
 .pb-settings-block .pb-debug {
     margin-top: 12px;
     padding-top: 10px;
