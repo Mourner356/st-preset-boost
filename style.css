@@ -191,3 +191,232 @@ body.pb-tap .drawer-icon:active {
         margin: -9px 0 0 -9px;
     }
 }
+/* ========== 预设列表基础优化 ========== */
+body.pb-on #completion_prompt_manager_list,
+body.pb-on .completion_prompt_manager_list,
+body.pb-on .completion_prompt_manager_prompt {
+    contain: layout style;
+}
+
+body.pb-lazy .completion_prompt_manager_prompt {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 34px;
+}
+
+/* ========== 拖拽期间低开销模式 ========== */
+body.pb-dragging *,
+body.pb-dragging *::before,
+body.pb-dragging *::after {
+    transition: none !important;
+    animation: none !important;
+}
+
+body.pb-dragging #completion_prompt_manager_list,
+body.pb-dragging #completion_prompt_manager_list *,
+body.pb-dragging .completion_prompt_manager_list,
+body.pb-dragging .completion_prompt_manager_list * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+body.pb-dragging {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* ========== 全局关闭毛玻璃 ========== */
+body.pb-noblur {
+    --SmartThemeBlurStrength: 0px;
+}
+
+body.pb-noblur .drawer-content,
+body.pb-noblur #openai_settings,
+body.pb-noblur .popup,
+body.pb-noblur dialog,
+body.pb-noblur #completion_prompt_manager_list,
+body.pb-noblur #completion_prompt_manager_list * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* ========== 编辑框优化 ========== */
+body.pb-edit #completion_prompt_manager_popup_entry_form_prompt,
+body.pb-edit #completion_prompt_manager_popup_edit textarea,
+body.pb-edit #completion_prompt_manager textarea,
+body.pb-edit .completion_prompt_manager textarea {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    text-rendering: optimizeSpeed;
+    font-variant-ligatures: none;
+    contain: layout style;
+    overscroll-behavior: contain;
+}
+
+body.pb-edit #completion_prompt_manager_popup_edit,
+body.pb-edit #completion_prompt_manager_popup_edit * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+body.pb-edit #completion_prompt_manager_popup_entry_form_prompt:focus,
+body.pb-edit .completion_prompt_manager textarea:focus {
+    outline: 2px solid var(--SmartThemeQuoteColor, #6c8cff);
+    outline-offset: -2px;
+    box-shadow: none !important;
+}
+
+/* ========== 点按反馈 ========== */
+body.pb-tap .pb-pressed {
+    transform: scale(0.94);
+    filter: brightness(1.25);
+    transition: transform 0.06s ease-out, filter 0.06s ease-out;
+}
+
+body.pb-tap button,
+body.pb-tap .menu_button,
+body.pb-tap .drawer-icon,
+body.pb-tap .inline-drawer-toggle,
+body.pb-tap [role="button"] {
+    transition: transform 0.12s ease-out, filter 0.12s ease-out;
+}
+
+body.pb-tap button:active,
+body.pb-tap .menu_button:active,
+body.pb-tap .drawer-icon:active {
+    transform: scale(0.94);
+}
+
+/* 波纹图层 */
+#pb-ripple-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99999;
+    overflow: hidden;
+}
+
+#pb-ripple-layer .pb-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    background: var(--SmartThemeQuoteColor, #8aa4ff);
+    opacity: 0.55;
+    animation: pb-dot-out 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes pb-dot-out {
+    from { transform: scale(0.4); opacity: 0.55; }
+    to   { transform: scale(4.2); opacity: 0; }
+}
+
+/* ========== 预设列表滚动优化（新增） ========== */
+body.pb-on #completion_prompt_manager_list,
+body.pb-on .completion_prompt_manager_list {
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+    transform: translateZ(0);
+}
+
+body.pb-on #completion_prompt_manager_list::-webkit-scrollbar,
+body.pb-on .completion_prompt_manager_list::-webkit-scrollbar {
+    width: 8px;
+}
+
+body.pb-on #completion_prompt_manager_list::-webkit-scrollbar-track,
+body.pb-on .completion_prompt_manager_list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body.pb-on #completion_prompt_manager_list::-webkit-scrollbar-thumb,
+body.pb-on .completion_prompt_manager_list::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+body.pb-on #completion_prompt_manager_list::-webkit-scrollbar-thumb:hover,
+body.pb-on .completion_prompt_manager_list::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* ========== 设置面板样式 ========== */
+.pb-settings-block .pb-group {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.pb-settings-block .pb-group:last-of-type {
+    border-bottom: none;
+}
+
+.pb-settings-block .pb-group-title {
+    font-size: 0.85em;
+    font-weight: bold;
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+
+.pb-settings-block .checkbox_label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.pb-settings-block .pb-rollback-notice {
+    background: rgba(33, 150, 243, 0.15);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+    font-size: 0.85em;
+    color: #2196f3;
+}
+
+.pb-settings-block .pb-stat {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(128, 128, 128, 0.25);
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+/* 尊重系统减少动态效果设置 */
+@media (prefers-reduced-motion: reduce) {
+    #pb-ripple-layer .pb-dot { 
+        animation-duration: 0.01s; 
+    }
+    body.pb-tap .pb-pressed,
+    body.pb-tap button,
+    body.pb-tap .menu_button { 
+        transition-duration: 0.01s; 
+    }
+    body.pb-on #completion_prompt_manager_list,
+    body.pb-on .completion_prompt_manager_list {
+        scroll-behavior: auto;
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    body.pb-lazy .completion_prompt_manager_prompt {
+        contain-intrinsic-size: auto 40px;
+    }
+    #pb-ripple-layer .pb-dot {
+        width: 18px;
+        height: 18px;
+        margin: -9px 0 0 -9px;
+    }
+}
+
