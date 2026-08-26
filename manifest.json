@@ -1,0 +1,11 @@
+{
+    "display_name": "预设性能加速 Preset Boost",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "TavernMaster",
+    "version": "1.0.0",
+    "homePage": "https://github.com/Mourner356/st-preset-boost"
+}
