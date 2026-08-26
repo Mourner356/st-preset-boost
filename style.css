@@ -1,0 +1,83 @@
+/* ========== 列表渲染隔离 ==========
+   告诉浏览器：这块区域的布局变化不用影响外面，
+   减少每次拖动时的整页重排范围 */
+body.pb-on #completion_prompt_manager_list,
+body.pb-on .completion_prompt_manager_list {
+    contain: layout style;
+}
+
+body.pb-on .completion_prompt_manager_prompt {
+    contain: layout style;
+}
+
+/* ========== 屏幕外条目延迟渲染 ==========
+   条目多的时候效果最明显，浏览器会跳过看不见的行 */
+body.pb-lazy .completion_prompt_manager_prompt {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 34px;
+}
+
+/* ========== 拖拽期间的低开销模式 ==========
+   过渡动画、阴影、文字阴影、滤镜，每一项都要逐帧重算，
+   拖拽这几百毫秒里全部关掉 */
+body.pb-dragging *,
+body.pb-dragging *::before,
+body.pb-dragging *::after {
+    transition: none !important;
+    animation: none !important;
+}
+
+body.pb-dragging #completion_prompt_manager_list,
+body.pb-dragging #completion_prompt_manager_list *,
+body.pb-dragging .completion_prompt_manager_list,
+body.pb-dragging .completion_prompt_manager_list * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* 拖拽时禁止误选文字，避免蓝色高亮跟着鼠标刷 */
+body.pb-dragging {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* ========== 全局关闭毛玻璃 ==========
+   酒馆默认主题的模糊强度是性能大户，
+   条目多 + 抽屉展开时尤其吃帧 */
+body.pb-noblur {
+    --SmartThemeBlurStrength: 0px;
+}
+
+body.pb-noblur .drawer-content,
+body.pb-noblur #openai_settings,
+body.pb-noblur #completion_prompt_manager_list,
+body.pb-noblur #completion_prompt_manager_list * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* ========== 设置面板样式 ========== */
+.pb-settings-block .pb-stat {
+    margin-top: 8px;
+    font-size: 0.9em;
+    opacity: 0.75;
+}
+
+.pb-settings-block .checkbox_label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+/* 移动端：触屏长按拖拽更依赖这些优化 */
+@media (max-width: 768px) {
+    body.pb-lazy .completion_prompt_manager_prompt {
+        contain-intrinsic-size: auto 40px;
+    }
+}
