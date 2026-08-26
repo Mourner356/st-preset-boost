@@ -1,6 +1,4 @@
-/* ========== 列表渲染隔离 ==========
-   告诉浏览器：这块区域的布局变化不用影响外面，
-   减少每次拖动时的整页重排范围 */
+/* ========== v1.0.0 原有样式（保持不变）========== */
 body.pb-on #completion_prompt_manager_list,
 body.pb-on .completion_prompt_manager_list {
     contain: layout style;
@@ -10,16 +8,11 @@ body.pb-on .completion_prompt_manager_prompt {
     contain: layout style;
 }
 
-/* ========== 屏幕外条目延迟渲染 ==========
-   条目多的时候效果最明显，浏览器会跳过看不见的行 */
 body.pb-lazy .completion_prompt_manager_prompt {
     content-visibility: auto;
     contain-intrinsic-size: auto 34px;
 }
 
-/* ========== 拖拽期间的低开销模式 ==========
-   过渡动画、阴影、文字阴影、滤镜，每一项都要逐帧重算，
-   拖拽这几百毫秒里全部关掉 */
 body.pb-dragging *,
 body.pb-dragging *::before,
 body.pb-dragging *::after {
@@ -38,15 +31,11 @@ body.pb-dragging .completion_prompt_manager_list * {
     backdrop-filter: none !important;
 }
 
-/* 拖拽时禁止误选文字，避免蓝色高亮跟着鼠标刷 */
 body.pb-dragging {
     -webkit-user-select: none;
     user-select: none;
 }
 
-/* ========== 全局关闭毛玻璃 ==========
-   酒馆默认主题的模糊强度是性能大户，
-   条目多 + 抽屉展开时尤其吃帧 */
 body.pb-noblur {
     --SmartThemeBlurStrength: 0px;
 }
@@ -61,23 +50,271 @@ body.pb-noblur #completion_prompt_manager_list * {
     text-shadow: none !important;
 }
 
-/* ========== 设置面板样式 ========== */
-.pb-settings-block .pb-stat {
-    margin-top: 8px;
-    font-size: 0.9em;
-    opacity: 0.75;
+/* ========== v1.1.0 新增：编辑器优化 ========== */
+body.pb-edit-boost textarea[data-pb-optimized] {
+    /* 禁用各种自动功能，减少输入时的计算开销 */
+    font-variant-ligatures: none;
+    text-rendering: optimizeSpeed;
+    
+    /* 渲染隔离 */
+    contain: layout style;
+    content-visibility: auto;
+    
+    /* 滚动优化 */
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
 }
 
-.pb-settings-block .checkbox_label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
+/* 编辑时减少重排 */
+body.pb-edit-boost .completion_prompt_manager textarea:focus {
+    outline: 2px solid var(--SmartThemeBodyColor, #007bff);
+    outline-offset: -2px;
+    box-shadow: none;
+    border-color: transparent;
 }
 
-/* 移动端：触屏长按拖拽更依赖这些优化 */
-@media (max-width: 768px) {
-    body.pb-lazy .completion_prompt_manager_prompt {
-        contain-intrinsic-size: auto 40px;
+/* 字符计数器优化显示 */
+body.pb-edit-boost .character_counter,
+body.pb-edit-boost .char-counter {
+    font-variant-numeric: tabular-nums;
+    will-change: contents;
+}
+
+/* ========== v1.1.0 新增：按钮反馈系统 ========== */
+body.pb-btn-feedback button,
+body.pb-btn-feedback .menu_button,
+body.pb-btn-feedback .fa-solid,
+body.pb-btn-feedback [role="button"] {
+    transition: transform 0.1s ease, background-color 0.2s ease !important;
+    cursor: pointer;
+}
+
+/* 按钮按下效果 */
+body.pb-btn-feedback button:active,
+body.pb-btn-feedback .menu_button:active,
+body.pb-btn-feedback .clickable:active {
+    transform: scale(0.95) !important;
+}
+
+/* 悬停效果增强 */
+body.pb-btn-feedback button:hover:not(:disabled),
+body.pb-btn-feedback .menu_button:hover,
+body.pb-btn-feedback .fa-solid:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+/* 波纹动画 */
+@keyframes pb-ripple-anim {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.pb-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: pb-ripple-anim 0.6s linear;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 特定按钮类型优化 */
+body.pb-btn-feedback .inline-drawer-toggle:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ========== v1.1.0 新增：设置面板样式更新 ========== */
+.pb-settings-block .pb-section {
+    margin-bottom: 16px;
+    padding-bottom: 1 (const key of Object.keys(DEFAULTS)) {
+        if (extension_settings[MODULE][key] === undefined) {
+            extension_settings[MODULE][key] = DEFAULTS[key];
+        }
+    }
+    return extension_settings[MODULE];
+}
+
+function applyClasses() {
+    const s = cfg();
+    const b = document.body;
+    b.classList.toggle('pb-on', s.enabled);
+    b.classList.toggle('pb-lazy', s.enabled && s.lazyRows);
+    b.classList.toggle('pb-noblur', s.enabled && s.killBlur);
+    b.classList.toggle('pb-edit', s.enabled && s.editBoost);
+    b.classList.toggle('pb-tap', s.enabled && s.tapFeedback);
+}
+
+/* ---------- 拖拽降开销（沿用 v1.0.0，已验证有效） ---------- */
+
+function onDragStart(event) {
+    const s = cfg();
+    if (!s.enabled || !s.dragBoost) return;
+    if (!event.target.closest(LIST_SELECTOR)) return;
+    document.body.classList.add('pb-dragging');
+}
+
+function onDragEnd() {
+    document.body.classList.remove('pb-dragging');
+}
+
+/* ---------- 点按反馈：事件委托，不改写任何元素 ---------- */
+
+function ensureRippleLayer() {
+    if (rippleLayer && document.body.contains(rippleLayer)) return rippleLayer;
+    rippleLayer = document.createElement('div');
+    rippleLayer.id = 'pb-ripple-layer';
+    document.body.appendChild(rippleLayer);
+    return rippleLayer;
+}
+
+function onTapDown(event) {
+    const s = cfg();
+    if (!s.enabled || !s.tapFeedback) return;
+
+    const target = event.target.closest(TAP_SELECTOR);
+    if (!target) return;
+
+    // 缩放反馈：加 class，动画结束自动移除，不留痕
+    target.classList.add('pb-pressed');
+    setTimeout(() => target.classList.remove('pb-pressed'), 160);
+
+    // 波纹：画在独立图层上，不进按钮内部，不会被裁剪
+    if (!s.ripple) return;
+
+    const layer = ensureRippleLayer();
+    const dot = document.createElement('span');
+    dot.className = 'pb-dot';
+    dot.style.left = `${event.clientX}px`;
+    dot.style.top = `${event.clientY}px`;
+    layer.appendChild(dot);
+    dot.addEventListener('animationend', () => dot.remove(), { once: true });
+    // 兜底：动画事件丢失时也要回收
+    setTimeout(() => dot.remove(), 700);
+}
+
+function bindGlobalHooks() {
+    const opts = { passive: true, capture: true };
+    document.addEventListener('pointerdown', onDragStart, opts);
+    document.addEventListener('pointerup', onDragEnd, opts);
+    document.addEventListener('pointercancel', onDragEnd, opts);
+    window.addEventListener('blur', onDragEnd, { passive: true });
+    document.addEventListener('pointerdown', onTapDown, opts);
+}
+
+/* ---------- 编辑框优化：定时轻扫，不用 MutationObserver ---------- */
+
+function tuneEditor(el) {
+    if (el.dataset.pbTuned === '1') return;
+    const s = cfg();
+
+    if (s.noSpellcheck) {
+        el.spellcheck = false;
+        el.setAttribute('autocorrect', 'off');
+        el.setAttribute('autocapitalize', 'off');
+        el.setAttribute('autocomplete', 'off');
+    }
+    el.dataset.pbTuned = '1';
+}
+
+function scanEditors() {
+    const s = cfg();
+    if (!s.enabled || !s.editBoost) return;
+    // 预设编辑框数量极少（通常 0 或 1 个），这个查询开销可以忽略
+    document.querySelectorAll(EDIT_SELECTOR).forEach(tuneEditor);
+}
+
+/* ---------- 设置面板 ---------- */
+
+const LABELS = {
+    enabled: '启用加速',
+    dragBoost: '拖拽时关闭动画与阴影',
+    lazyRows: '屏幕外条目延迟渲染',
+    killBlur: '关闭毛玻璃模糊（提速明显，界面变扁平）',
+    editBoost: '编辑框优化（关阴影 · 快速文字渲染）',
+    noSpellcheck: '关闭拼写检查与自动纠正',
+    tapFeedback: '点按缩放反馈',
+    ripple: '点按波纹（依赖上一项）',
+};
+
+const GROUPS = [
+    { title: '预设列表', keys: ['enabled', 'dragBoost', 'lazyRows', 'killBlur'] },
+    { title: '编辑框', keys: ['editBoost', 'noSpellcheck'] },
+    { title: '点按反馈', keys: ['tapFeedback', 'ripple'] },
+];
+
+function buildPanel() {
+    const host = document.getElementById('extensions_settings2')
+        || document.getElementById('extensions_settings');
+    if (!host) return false;
+    if (document.getElementById('pb_settings')) return true;
+
+    const s = cfg();
+    const groupsHtml = GROUPS.map(g => `
+        <div class="pb-group">
+            <div class="pb-group-title">${g.title}</div>
+            ${g.keys.map(k => `
+                <label class="checkbox_label">
+                    <input type="checkbox" id="pb_${k}" ${s[k] ? 'checked' : ''}>
+                    <span>${LABELS[k]}</span>
+                </label>
+            `).join('')}
+        </div>
+    `).join('');
+
+    const wrap = document.createElement('div');
+    wrap.id = 'pb_settings';
+    wrap.className = 'pb-settings-block';
+    wrap.innerHTML = `
+        <div class="inline-drawer">
+            <div class="inline-drawer-toggle inline-drawer-header">
+                <b>预设性能加速 v1.1.1</b>
+                <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+            </div>
+            <div class="inline-drawer-content">
+                ${groupsHtml}
+                <div class="pb-stat">
+                    预设条目 <span id="pb_count">—</span> ·
+                    编辑框已优化 <span id="pb_edit_count">—</span>
+                </div>
+            </div>
+        </div>
+    `;
+    host.appendChild(wrap);
+
+    for (const key of Object.keys(DEFAULTS)) {
+        const input = document.getElementById(`pb_${key}`);
+        if (!input) continue;
+        input.addEventListener('change', () => {
+            cfg()[key] = input.checked;
+            applyClasses();
+            if (key === 'editBoost' || key === 'noSpellcheck') scanEditors();
+            saveSettingsDebounced();
+        });
+    }
+
+    return true;
+}
+
+function refreshStat() {
+    const a = document.getElementById('pb_count');
+    const b = document.getElementById('pb_edit_count');
+    if (a) a.textContent = String(document.querySelectorAll(ROW_SELECTOR).length);
+    if (b) b.textContent = String(document.querySelectorAll('[data-pb-tuned="1"]').length);
+}
+
+/* ---------- 启动 ---------- */
+
+function boot() {
+    cfg();
+    applyClasses();
+    bindGlobalHooks();
+    scanEditors();
+
+    sc 18px;
+        margin: -9px 0 0 -9px;
     }
 }
